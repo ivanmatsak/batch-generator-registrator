@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список событий</title>
+    <style>
+        .pagination {
+            display: flex !important;
+            flex-direction: row !important;
+            padding-left: 0;
+            list-style: none;
+        }
+        .page-item {
+            margin: 0 2px;
+        }
+        .pagination .page-link { color: #212529; }
+        .pagination .active .page-link { background-color: #212529; border-color: #212529; color: white; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📋 Реестр зарегистрированных событий</h2>
+        <span class="badge bg-secondary" th:text="'Всего записей: ' + ${eventsPage.totalElements}"></span>
+    </div>
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <form th:action="@{/api/v1/events}" method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Начало периода</label>
+                    <input type="datetime-local" name="start" th:value="${start}" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Конец периода</label>
+                    <input type="datetime-local" name="end" th:value="${end}" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Тип</label>
+                    <input type="text" name="type" th:value="${type}" class="form-control" placeholder="Напр: USER_ACTION">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Источник</label>
+                    <input type="text" name="source" th:value="${source}" class="form-control" placeholder="Напр: generator">
+                </div>
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-dark w-100">Поиск</button>
+                    <a th:href="@{/api/v1/events}" class="btn btn-outline-secondary">Сброс</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover bg-white shadow-sm rounded overflow-hidden">
+            <thead class="table-dark">
+            <tr>
+                <th>ID события</th>
+                <th>Источник</th>
+                <th>Тип</th>
+                <th>Дата регистрации (МСК)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="event : ${eventsPage.content}">
+                <td class="font-monospace" style="font-size: 0.85rem;" th:text="${event.id}"></td>
+                <td th:text="${event.source}"></td>
+                <td><span class="badge bg-info text-dark" th:text="${event.type}"></span></td>
+                <td th:text="${#temporals.format(event.timestamp, 'dd.MM.yyyy HH:mm:ss')}"></td>
+            </tr>
+            <tr th:if="${eventsPage.empty}">
+                <td colspan="4" class="text-center py-4 text-muted">События не найдены</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <nav th:if="${eventsPage.totalPages > 1}" class="mt-4 border-top pt-4">
+        <ul class="pagination justify-content-center d-flex flex-row flex-wrap">
+
+            <li class="page-item" th:classappend="${eventsPage.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/api/v1/events(page=${eventsPage.number - 1}, size=${eventsPage.size}, start=${start}, end=${end}, type=${type}, source=${source})}">&laquo;</a>
+            </li>
+
+            <li class="page-item"
+                th:each="pageNumber : ${#numbers.sequence(0, eventsPage.totalPages - 1)}"
+                th:classappend="${pageNumber == eventsPage.number} ? 'active'">
+
+                <a class="page-link"
+                   th:href="@{/api/v1/events(
+                    page=${pageNumber},
+                    size=${eventsPage.size},
+                    start=${(start != null) ? start : ''},
+                    end=${(end != null) ? end : ''},
+                    type=${(type != null) ? type : ''},
+                    source=${(source != null) ? source : ''}
+               )}"
+                   th:text="${pageNumber + 1}">
+                </a>
+            </li>
+
+            <li class="page-item" th:classappend="${eventsPage.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/api/v1/events(page=${eventsPage.number + 1}, size=${eventsPage.size}, start=${start}, end=${end}, type=${type}, source=${source})}">&raquo;</a>
+            </li>
+
+        </ul>
+    </nav>
+</div>
+</body>
+</html>
